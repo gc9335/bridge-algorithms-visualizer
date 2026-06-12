@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>桥算法动态实验台</title>
+  <link rel="stylesheet" href="visualizer.css">
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true"></div>
+  <main class="shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Bridge Search Studio</p>
+        <h1>桥算法动态实验台</h1>
+        <p class="summary">
+          把删边检查、生成森林、非树边成环、并查集合并和最终桥高亮绑定到同一条时间轴上，用来讲清楚算法怎样一步步找到桥。
+        </p>
+      </div>
+      <div class="hero-metrics" aria-label="图统计">
+        <div class="hero-metric"><span>顶点</span><strong id="vertexCount">0</strong><span>当前输入图规模</span></div>
+        <div class="hero-metric"><span>边</span><strong id="edgeCount">0</strong><span>去重后的无向边</span></div>
+        <div class="hero-metric"><span>桥</span><strong id="bridgeCount">0</strong><span>算法识别结果</span></div>
+        <div class="hero-metric"><span>回放事件数</span><strong id="stepCount">0</strong><span>可跳转的教学步骤</span></div>
+      </div>
+    </header>
+
+    <section class="variant-strip" aria-label="算法选择">
+      <button id="benchmarkBtn" class="variant-card benchmark-card" type="button">
+        <b>B0</b>
+        <small>基准算法</small>
+        <p>逐条删除边，再用 BFS 统计连通块是否增加。</p>
+      </button>
+      <button id="efficientBtn" class="variant-card efficient-card active" type="button">
+        <b>UF</b>
+        <small>并查集优化</small>
+        <p>用非树边形成的环排除非桥，并压缩已处理树路径。</p>
+      </button>
+    </section>
+
+    <section class="control-panel panel" aria-label="图和播放设置">
+      <div class="control-row">
+        <label>
+          <span>示例图</span>
+          <select id="sampleSelect">
+            <option value="cycle-tail">环 + 尾巴</option>
+            <option value="two-blocks">双环单桥</option>
+            <option value="forest">森林与链</option>
+            <option value="dense-core">稠密核心</option>
+          </select>
+        </label>
+        <label>
+          <span>随机节点数</span>
+          <input id="randomNodeCount" type="number" min="4" max="18" value="10">
+        </label>
+        <label>
+          <span>随机连边密度</span>
+          <input id="randomDensity" type="range" min="0.08" max="0.55" step="0.01" value="0.24">
+          <strong id="randomDensityLabel">0.24</strong>
+        </label>
+        <label class="graph-input-label">
+          <span>输入图</span>
+          <textarea id="graphInput" spellcheck="false" aria-label="自定义图输入"></textarea>
+        </label>
+      </div>
+      <div class="control-row compact">
+        <button id="loadInputBtn" type="button">载入输入</button>
+        <button id="randomBtn" type="button">随机生成图</button>
+        <button id="resetBtn" type="button">重新计算</button>
+        <button id="prevBtn" type="button">上一步</button>
+        <button id="playBtn" type="button" class="primary">播放</button>
+        <button id="nextBtn" type="button">下一步</button>
+        <label class="speed-control">
+          <span>播放速度</span>
+          <input id="speedRange" type="range" min="0.5" max="3" step="0.5" value="1.5">
+        </label>
+        <div class="step-status">
+          <span id="stepBadge">0 / 0</span>
+          <div class="progress"><i id="progressFill"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard">
+      <article class="panel stage-panel" aria-label="搜索主舞台">
+        <div class="panel-head">
+          <div>
+            <h2>搜索主舞台</h2>
+            <p id="algorithmTitle">并查集优化算法</p>
+          </div>
+        </div>
+        <svg id="graphSvg" viewBox="0 0 760 520" role="img" aria-label="桥查找过程图"></svg>
+        <div class="legend">
+          <span><i class="swatch tree"></i>生成树边</span>
+          <span><i class="swatch non-tree"></i>非树边</span>
+          <span><i class="swatch active"></i>当前检查</span>
+          <span><i class="swatch rejected"></i>标记非桥</span>
+          <span><i class="swatch bridge"></i>最终桥</span>
+        </div>
+      </article>
+
+      <article class="panel info-panel" aria-label="算法说明">
+        <div class="panel-head">
+          <div>
+            <h2>算法说明</h2>
+            <p>当前事件、并查集现场和复杂度会随时间轴联动。</p>
+          </div>
+        </div>
+        <div class="info-block">
+          <h3>当前事件</h3>
+          <p id="eventTitle">准备运行</p>
+          <p id="eventDetail" class="muted">选择样例图后运行任一算法，步骤会与图、伪代码、日志同步。</p>
+        </div>
+        <div class="info-block">
+          <h3>并查集现场</h3>
+          <div id="dsuState" class="dsu-state"></div>
+        </div>
+        <div class="info-grid">
+          <div>
+            <h3>基准算法</h3>
+            <p>删每条边 + BFS</p>
+            <strong>O(E × (V + E))</strong>
+          </div>
+          <div>
+            <h3>并查集优化</h3>
+            <p>生成树 + 压缩环路径</p>
+            <strong>接近 O(V + E)</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel timeline-panel" aria-label="时间轴">
+        <div class="panel-head">
+          <div>
+            <h2>时间轴</h2>
+            <p>点击任意步骤可跳转到对应的算法状态。</p>
+          </div>
+          <input id="timelineRange" type="range" min="0" max="0" value="0" aria-label="步骤时间轴">
+        </div>
+        <div id="timeline" class="timeline"></div>
+      </article>
+
+      <article class="panel pseudo-panel" aria-label="伪代码联动">
+        <div class="panel-head">
+          <div>
+            <h2>伪代码联动</h2>
+            <p>当前动画步骤会同步高亮对应的伪代码行。</p>
+          </div>
+        </div>
+        <div id="pseudoCode" class="pseudocode-list"></div>
+      </article>
+
+      <article class="panel log-panel" aria-label="并查集状态">
+        <div class="panel-head">
+          <div>
+            <h2>并查集状态</h2>
+            <p>展示当前步骤的 parent 数组与压缩后的连通分组。</p>
+          </div>
+        </div>
+        <div id="eventLog" class="uf-board"></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="visualizer.js"></script>
+</body>
+</html>
