@@ -553,55 +553,243 @@ function renderTimeline() {
   el.timelineRange.value = String(state.index);
 }
 
+function previousDsuBefore(index) {
+  for (let i = index - 1; i >= 0; i -= 1) {
+    if (state.events[i]?.dsu) return state.events[i].dsu;
+  }
+  return null;
+}
+
+function buildDsuForestLayout(parent) {
+  const n = parent.length;
+  const children = Array.from({ length: n }, () => []);
+  const roots = [];
+  parent.forEach((p, node) => {
+    if (p === node || p < 0 || p >= n) {
+      roots.push(node);
+    } else {
+      children[p].push(node);
+    }
+  });
+  children.forEach((list) => list.sort((a, b) => a - b));
+  roots.sort((a, b) => a - b);
+
+  const nodeGap = 76;
+  const levelGap = 104;
+  const rootGap = 88;
+  const marginX = 58;
+  const top = 70;
+  const widths = new Map();
+  const positions = new Map();
+  let maxDepth = 0;
+
+  function measure(node) {
+    const childWidths = children[node].map(measure);
+    const total = childWidths.reduce((sum, width) => sum + width, 0);
+    const width = Math.max(nodeGap, total);
+    widths.set(node, width);
+    return width;
+  }
+
+  function place(node, left, depth) {
+    maxDepth = Math.max(maxDepth, depth);
+    const width = widths.get(node) || nodeGap;
+    const kids = children[node];
+    let x = left + width / 2;
+    if (kids.length) {
+      const childTotal = kids.reduce((sum, child) => sum + (widths.get(child) || nodeGap), 0);
+      let cursor = left + (width - childTotal) / 2;
+      const childCenters = [];
+      kids.forEach((child) => {
+        const childWidth = widths.get(child) || nodeGap;
+        place(child, cursor, depth + 1);
+        childCenters.push(positions.get(child).x);
+        cursor += childWidth;
+      });
+      x = (childCenters[0] + childCenters[childCenters.length - 1]) / 2;
+    }
+    positions.set(node, { x, y: top + depth * levelGap });
+  }
+
+  let cursor = marginX;
+  roots.forEach((root) => {
+    const width = measure(root);
+    place(root, cursor, 0);
+    cursor += width + rootGap;
+  });
+
+  return {
+    children,
+    roots,
+    positions,
+    width: Math.max(760, cursor - rootGap + marginX),
+    height: Math.max(300, top + maxDepth * levelGap + 86),
+  };
+}
+
+function renderParentArray(parent, activeNodes, changedNodes) {
+  const arrayPanel = document.createElement("div");
+  arrayPanel.className = "uf-array-panel";
+  arrayPanel.style.setProperty("--uf-count", String(parent.length));
+
+  const parentRow = document.createElement("div");
+  parentRow.className = "uf-array-row";
+  const parentLabel = document.createElement("div");
+  parentLabel.className = "uf-array-label";
+  parentLabel.textContent = "parent";
+  parentRow.append(parentLabel);
+
+  parent.forEach((p, node) => {
+    const cell = document.createElement("div");
+    cell.className = [
+      "uf-array-cell",
+      p === node ? "root" : "",
+      activeNodes.has(node) ? "active" : "",
+      changedNodes.has(node) ? "changed" : "",
+    ].filter(Boolean).join(" ");
+    cell.textContent = p;
+    parentRow.append(cell);
+  });
+
+  const indexRow = document.createElement("div");
+  indexRow.className = "uf-array-row index-row";
+  const indexLabel = document.createElement("div");
+  indexLabel.className = "uf-array-label";
+  indexLabel.textContent = "node";
+  indexRow.append(indexLabel);
+  parent.forEach((_, node) => {
+    const indexCell = document.createElement("div");
+    indexCell.className = [
+      "uf-array-index",
+      activeNodes.has(node) ? "active" : "",
+      changedNodes.has(node) ? "changed" : "",
+    ].filter(Boolean).join(" ");
+    indexCell.textContent = node;
+    indexRow.append(indexCell);
+  });
+
+  arrayPanel.append(parentRow, indexRow);
+  return arrayPanel;
+}
+
+function renderDsuForest(parent, activeNodes, changedNodes) {
+  const layout = buildDsuForestLayout(parent);
+  const wrap = document.createElement("div");
+  wrap.className = "uf-forest-wrap";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "uf-forest");
+  svg.setAttribute("viewBox", `0 0 ${layout.width} ${layout.height}`);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "并查集 parent 数组形成的森林结构");
+
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+  marker.setAttribute("id", "uf-arrow");
+  marker.setAttribute("viewBox", "0 0 10 10");
+  marker.setAttribute("refX", "8");
+  marker.setAttribute("refY", "5");
+  marker.setAttribute("markerWidth", "7");
+  marker.setAttribute("markerHeight", "7");
+  marker.setAttribute("orient", "auto-start-reverse");
+  const markerPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  markerPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+  marker.append(markerPath);
+  defs.append(marker);
+  svg.append(defs);
+
+  const edgeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  const loopLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  const nodeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  svg.append(edgeLayer, loopLayer, nodeLayer);
+
+  parent.forEach((p, node) => {
+    if (p === node || p < 0 || p >= parent.length) return;
+    const childPos = layout.positions.get(node);
+    const parentPos = layout.positions.get(p);
+    if (!childPos || !parentPos) return;
+    const midY = (childPos.y + parentPos.y) / 2;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("class", `uf-tree-edge ${changedNodes.has(node) ? "changed" : ""}`);
+    path.setAttribute(
+      "d",
+      `M ${childPos.x} ${childPos.y - 25} C ${childPos.x} ${midY}, ${parentPos.x} ${midY}, ${parentPos.x} ${parentPos.y + 27}`,
+    );
+    path.setAttribute("marker-end", "url(#uf-arrow)");
+    edgeLayer.append(path);
+  });
+
+  layout.roots.forEach((root) => {
+    const pos = layout.positions.get(root);
+    if (!pos) return;
+    const loop = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    loop.setAttribute("class", `uf-root-loop ${activeNodes.has(root) ? "active" : ""}`);
+    loop.setAttribute(
+      "d",
+      `M ${pos.x - 14} ${pos.y - 29} C ${pos.x - 42} ${pos.y - 62}, ${pos.x + 34} ${pos.y - 70}, ${pos.x + 18} ${pos.y - 29}`,
+    );
+    loop.setAttribute("marker-end", "url(#uf-arrow)");
+    loopLayer.append(loop);
+  });
+
+  parent.forEach((p, node) => {
+    const pos = layout.positions.get(node);
+    if (!pos) return;
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    group.setAttribute("class", [
+      "uf-tree-node",
+      p === node ? "root" : "",
+      activeNodes.has(node) ? "active" : "",
+      changedNodes.has(node) ? "changed" : "",
+    ].filter(Boolean).join(" "));
+    group.setAttribute("transform", `translate(${pos.x} ${pos.y})`);
+
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("r", "25");
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("dy", "0.36em");
+    text.textContent = node;
+    group.append(circle, text);
+    nodeLayer.append(group);
+  });
+
+  wrap.append(svg);
+  return wrap;
+}
+
 function renderLog() {
   el.eventLog.innerHTML = "";
   const event = state.events[state.index];
   if (!event?.dsu) {
-    el.eventLog.innerHTML = "<p class=\"uf-empty\">基准算法不使用并查集。切换到 UF 算法后，这里会展示 parent 数组和当前压缩分组。</p>";
+    el.eventLog.innerHTML = "<p class=\"uf-empty\">基准算法不使用并查集。切换到 UF 算法后，这里会展示 parent 数组和树状压缩结构。</p>";
     return;
   }
 
-  const groups = new Map();
-  event.dsu.forEach((parent, node) => {
-    let root = node;
-    const seen = new Set();
-    while (event.dsu[root] !== root && !seen.has(root)) {
-      seen.add(root);
-      root = event.dsu[root];
-    }
-    if (!groups.has(root)) groups.set(root, []);
-    groups.get(root).push(node);
-  });
+  const activeNodes = new Set(event.activeNodes || []);
+  const previousDsu = previousDsuBefore(state.index);
+  const changedNodes = new Set();
+  if (previousDsu) {
+    event.dsu.forEach((parent, node) => {
+      if (previousDsu[node] !== parent) changedNodes.add(node);
+    });
+  }
 
-  const parentGrid = document.createElement("div");
-  parentGrid.className = "uf-parent-grid";
-  parentGrid.style.setProperty("--uf-cols", String(Math.min(event.dsu.length, 10)));
-  event.dsu.forEach((parent, node) => {
-    const cell = document.createElement("div");
-    cell.className = parent === node ? `uf-cell root ${node === 0 ? "primary-root" : ""}` : "uf-cell";
-    cell.innerHTML = `
-      <span class="uf-node-label">node ${node}</span>
-      <strong>${parent}</strong>
-      ${parent === node ? `<em>ROOT</em>` : ""}
-    `;
-    parentGrid.append(cell);
-  });
+  const status = document.createElement("div");
+  status.className = "uf-step-note";
+  const changedText = [...changedNodes]
+    .map((node) => `${node}->${event.dsu[node]}`)
+    .join("，");
+  status.textContent = changedText
+    ? `本步 parent 更新：${changedText}`
+    : event.phase === "compress"
+      ? "本步执行 find，若存在长路径会在这里看到压缩后的 parent 变化。"
+      : "当前 parent 数组对应下方的并查集森林。";
 
-  const groupList = document.createElement("div");
-  groupList.className = "uf-groups";
-  [...groups.entries()].forEach(([root, nodes]) => {
-    const card = document.createElement("div");
-    card.className = `uf-group-card ${root === 0 ? "primary-root" : ""}`;
-    card.innerHTML = `
-      <div class="uf-root-badge"><span>ROOT</span><strong>${root}</strong></div>
-      <div class="uf-members">
-        ${nodes.map((node) => `<span>${node}</span>`).join("")}
-      </div>
-    `;
-    groupList.append(card);
-  });
-
-  el.eventLog.append(parentGrid, groupList);
+  el.eventLog.append(
+    status,
+    renderParentArray(event.dsu, activeNodes, changedNodes),
+    renderDsuForest(event.dsu, activeNodes, changedNodes),
+  );
 }
 
 function bridgeTotal() {
