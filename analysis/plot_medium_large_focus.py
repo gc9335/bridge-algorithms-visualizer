@@ -66,7 +66,7 @@ def soften_axes(ax):
 
 
 def plot_runtime(rows):
-    labels = ["mediumG(1).txt", "largeG.txt"]
+    labels = ["mediumG", "largeG"]
     order = ["mediumG_file", "largeG_file"]
     x = list(range(len(order)))
     width = 0.32
@@ -116,7 +116,7 @@ def plot_runtime(rows):
 
 
 def plot_work(rows):
-    labels = ["mediumG(1).txt", "largeG.txt"]
+    labels = ["mediumG", "largeG"]
     order = ["mediumG_file", "largeG_file"]
     x = list(range(len(order)))
     width = 0.32
