@@ -1,0 +1,14 @@
+case,family,vertices,edges,components,density,avg_degree,baseline_work_estimate,baseline_ms,efficient_ms,baseline_bridges,efficient_bridges,bridge_ratio,speedup,efficient_edges_per_ms,estimated_index_memory_mb,status,note
+path_100,all_bridges,100,99,1,0.020000,1.980000,19701,0.091000,0.001647,99,99,1.000000,55.263158,60121.457490,0.003704,ok,path graph: every edge is a bridge
+path_1000,all_bridges,1000,999,1,0.002000,1.998000,1997001,7.664000,0.014097,999,999,1.000000,543.674628,70867.817451,0.037178,ok,larger path graph
+cycle_1000,no_bridges,1000,1000,1,0.002002,2.000000,2000000,6.077000,0.014613,0,0,0.000000,415.853102,68430.656934,0.037193,ok,single cycle: no bridge
+star_1000,all_bridges,1001,1000,1,0.001998,1.998002,2001000,4.069000,0.007853,1000,1000,1.000000,518.123939,127334.465195,0.037215,ok,star graph: every edge is a bridge
+chain_cycle_1000,mixed_sparse,1000,1048,1,0.002098,2.096000,2146304,5.170000,0.015603,19,19,0.018130,331.339457,67165.135655,0.037926,ok,chain plus local cycle-closing edges
+two_cliques_80,dense_blocks,160,6321,1,0.496934,79.012500,40966401,68.913000,0.035980,1,1,0.000158,1915.314063,175680.933852,0.099960,ok,two dense blocks connected by one bridge
+disconnected_30x20,disconnected,600,630,30,0.003506,2.100000,774900,3.762000,0.008153,480,480,0.761905,461.406378,77269.010630,0.022774,ok,multiple disconnected components with local cycles
+random_sparse_1000,random_sparse,1000,2199,1,0.004402,4.398000,7034601,15.245000,0.020960,0,0,0.000000,727.337786,104914.122137,0.055489,ok,connected random sparse graph
+random_mid_1000,random_mid,1000,3499,1,0.007005,6.998000,15742001,30.699000,0.027590,0,0,0.000000,1112.685756,126821.312070,0.075325,ok,connected random medium-density graph
+random_mid_5000,random_mid,5000,16999,1,0.001360,6.799600,373961001,-1.000000,0.329400,-1,0,0.000000,-1.000000,51605.950213,0.369057,baseline_skipped,baseline skipped because repeated BFS is too slow at this size
+random_large_20000,random_large,20000,69999,1,0.000350,6.999900,6299840001,-1.000000,1.598467,-1,0,0.000000,-1.000000,43791.341702,1.506790,baseline_skipped,efficient algorithm scalability case
+mediumG_file,provided,250,1273,1,0.040900,10.184000,1938779,3.181000,0.009443,0,0,0.000000,336.851394,134804.094599,0.024908,ok,provided input file
+largeG_file,provided_large,1000000,7586063,1,0.000015,15.172126,65134414839969,-1.000000,365.451000,-1,8,0.000001,-1.000000,20758.085215,137.688644,baseline_skipped,baseline skipped for 7.6M edges; efficient algorithm only

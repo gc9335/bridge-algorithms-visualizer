@@ -1,8 +1,5 @@
 analysis/benchmark_runner.exe
-analysis/*.csv
-analysis/*.png
 *.exe
 largeG.txt
-mediumG(1).txt
 .vscode/
 __pycache__/

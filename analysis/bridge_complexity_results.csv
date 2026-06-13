@@ -1,0 +1,16 @@
+experiment,case,vertices,edges,components,bridges,baseline_work_estimate,efficient_work_estimate,baseline_ms,efficient_ms,baseline_bridges,efficient_bridges,speedup,status,note
+edge_growth,edge_E_799,800,799,1,799,1277601,1599,3.248000,0.007223,799,799,449.653899,ok,fixed V=800; random tree plus extra random edges
+edge_growth,edge_E_999,800,999,1,329,1797201,1799,4.594333,0.011873,329,329,386.945536,ok,fixed V=800; random tree plus extra random edges
+edge_growth,edge_E_1299,800,1299,1,117,2726601,2099,6.888800,0.013773,117,117,500.154889,ok,fixed V=800; random tree plus extra random edges
+edge_growth,edge_E_1699,800,1699,1,47,4245801,2499,9.516467,0.017657,47,47,538.973004,ok,fixed V=800; random tree plus extra random edges
+edge_growth,edge_E_2199,800,2199,1,16,6594801,2999,13.582571,0.019820,16,16,685.296238,ok,fixed V=800; random tree plus extra random edges
+edge_growth,edge_E_2999,800,2999,1,1,11393201,3799,22.011571,0.026560,1,1,828.748924,ok,fixed V=800; random tree plus extra random edges
+edge_growth,edge_E_3999,800,3999,1,0,19191201,4799,35.287143,0.029470,0,0,1197.392021,ok,fixed V=800; random tree plus extra random edges
+edge_growth,edge_E_5299,800,5299,1,0,32318601,6099,63.477667,0.038970,0,0,1628.885467,ok,fixed V=800; random tree plus extra random edges
+bridge_growth,bridge_B_0,500,1150,1,0,1897500,1650,3.954200,0.010790,0,0,366.468953,ok,random cycle core with attached leaves; leaf edges are bridges
+bridge_growth,bridge_B_100,600,1250,1,100,2312500,1850,5.261200,0.011533,100,100,456.173410,ok,random cycle core with attached leaves; leaf edges are bridges
+bridge_growth,bridge_B_250,750,1400,1,250,3010000,2150,7.014533,0.013727,250,250,511.015056,ok,random cycle core with attached leaves; leaf edges are bridges
+bridge_growth,bridge_B_500,1000,1650,1,500,4372500,2650,9.636733,0.014983,500,500,643.163515,ok,random cycle core with attached leaves; leaf edges are bridges
+bridge_growth,bridge_B_900,1400,2050,1,900,7072500,3450,15.832857,0.018600,900,900,851.228879,ok,random cycle core with attached leaves; leaf edges are bridges
+bridge_growth,bridge_B_1400,1900,2550,1,1400,11347500,4450,25.784714,0.022250,1400,1400,1158.863563,ok,random cycle core with attached leaves; leaf edges are bridges
+bridge_growth,bridge_B_2000,2500,3150,1,2000,17797500,5650,40.759143,0.025180,2000,2000,1618.710995,ok,random cycle core with attached leaves; leaf edges are bridges
