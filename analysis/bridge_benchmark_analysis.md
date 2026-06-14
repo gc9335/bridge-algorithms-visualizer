@@ -2,6 +2,11 @@
 
 由 `benchmark_runner.cpp` 运行实验，并由 `analysis/plot_bridge_results.py` 生成图表。
 
+## 实验目的
+
+1. 掌握图的连通性。
+2. 掌握并查集的基本原理和应用。
+
 ## 图表
 
 ![运行时间对比](bridge_runtime_comparison.png)
