@@ -14,7 +14,9 @@
 
 ![基准算法理论工作量](bridge_work_estimate.png)
 
-![理论复杂度与真实耗时对比](bridge_theory_vs_actual.png)
+![a) 边数递增实验](bridge_edge_growth_complexity.png)
+
+![b) 桥数递增实验](bridge_bridge_growth_complexity.png)
 
 ## 实验结果表
 

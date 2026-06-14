@@ -16,6 +16,8 @@ FIG_SCALABILITY = ROOT / "bridge_scalability.png"
 FIG_STRUCTURE = ROOT / "bridge_structure_metrics.png"
 FIG_WORK = ROOT / "bridge_work_estimate.png"
 FIG_THEORY_ACTUAL = ROOT / "bridge_theory_vs_actual.png"
+FIG_EDGE_GROWTH = ROOT / "bridge_edge_growth_complexity.png"
+FIG_BRIDGE_GROWTH = ROOT / "bridge_bridge_growth_complexity.png"
 
 PALETTE = {
     "baseline": "#d95f59",
@@ -355,31 +357,41 @@ def plot_complexity_column(ax_theory, ax_actual, rows, x_key, x_label, title):
     ax_actual.legend(loc="upper left", fontsize=8)
 
 
+def plot_complexity_figure(rows, x_key, x_label, theory_title, figure_title, path):
+    if not rows:
+        return
+    fig, axes = plt.subplots(2, 1, figsize=(10.5, 8.2), sharex=True)
+    plot_complexity_column(
+        axes[0],
+        axes[1],
+        rows,
+        x_key,
+        x_label,
+        theory_title,
+    )
+    fig.suptitle(figure_title, fontsize=17, fontweight="bold")
+    save(fig, path)
+
+
 def plot_theory_actual(complexity_rows):
     edge_rows = [row for row in complexity_rows if row["experiment"] == "edge_growth"]
     bridge_rows = [row for row in complexity_rows if row["experiment"] == "bridge_growth"]
-    if not edge_rows or not bridge_rows:
-        return
-
-    fig, axes = plt.subplots(2, 2, figsize=(15, 9), sharex="col")
-    plot_complexity_column(
-        axes[0][0],
-        axes[1][0],
+    plot_complexity_figure(
         edge_rows,
         "edges",
         "边数 E（固定 V=800，随机树逐步增加随机边）",
         "边数递增：理论复杂度对比",
+        "a) 边数递增实验：理论复杂度与真实耗时",
+        FIG_EDGE_GROWTH,
     )
-    plot_complexity_column(
-        axes[0][1],
-        axes[1][1],
+    plot_complexity_figure(
         bridge_rows,
         "bridges",
         "桥数 B（随机环核心逐步挂接叶子边）",
         "桥数递增：理论复杂度对比",
+        "b) 桥数递增实验：理论复杂度与真实耗时",
+        FIG_BRIDGE_GROWTH,
     )
-    fig.suptitle("理论复杂度与真实耗时对比：按边数和桥数递增生成随机图", fontsize=17, fontweight="bold")
-    save(fig, FIG_THEORY_ACTUAL)
 
 
 def fmt_ms(value):
@@ -417,7 +429,9 @@ def write_markdown(rows, complexity_rows):
         "",
         f"![基准算法理论工作量]({FIG_WORK.name})",
         "",
-        f"![理论复杂度与真实耗时对比]({FIG_THEORY_ACTUAL.name})",
+        f"![a) 边数递增实验]({FIG_EDGE_GROWTH.name})",
+        "",
+        f"![b) 桥数递增实验]({FIG_BRIDGE_GROWTH.name})",
         "",
         "## 实验结果表",
         "",
@@ -524,7 +538,8 @@ def main():
         FIG_SCALABILITY,
         FIG_STRUCTURE,
         FIG_WORK,
-        FIG_THEORY_ACTUAL,
+        FIG_EDGE_GROWTH,
+        FIG_BRIDGE_GROWTH,
         MD_PATH,
     ]:
         print(f"wrote {path}")
